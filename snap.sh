@@ -2,7 +2,7 @@
 
 # This script manage lvm snapshots on your system
 # author Stanislav Cherkasov
-# version 0.2
+# version 0.2.1
 
 # Prechecks ###########################################################
 [ -z $(which blkid) ] && echo "ERR: no blkid" && exit 1
@@ -23,6 +23,7 @@ SED=$(which sed)
 AWK=$( which awk )
 LVREMOVE=$(which lvremove)
 LVCREATE=$(which lvcreate)
+LVCONVERT=$(which lvconvert)
 DATE=$(`which date` +%Y%m%d%H%M)
 
 # Variables ############################################################
@@ -37,10 +38,11 @@ echo \
 "
 Hi, seems like you need to take a look at help
 Available options are:
--o	Define origins
--s	Define snapshots
--c	Create snapshots
--r	Remove snapshots
+-o      Define origins
+-s      Define snapshots
+-c      Create snapshots
+-r      Remove snapshots
+-m      Merge snapshots to origin
 "
 }
 
@@ -54,7 +56,7 @@ function define_origins {
    then
     SWAP=$i
    else
-    test
+    SWAP="THERE_IS_NO_SWAP_HERE_AT_THE_MOMENT"
   fi
  done
  #                      exclude snapshots               exclude swap
@@ -71,7 +73,7 @@ function define_snapshots {
    then
     SWAP=$i
    else
-    test
+    SWAP="THERE_IS_NO_SWAP_HERE_AT_THE_MOMENT"
   fi
  done
  #                        only snapshots               exclude swap
@@ -83,14 +85,10 @@ function create_snapshots {
  # Function for creating snapshots
  # for lv like lvdata it will be lvdata_snap_$DATE
 
- A=$( define_origins | awk '{print $1"#separator#"$2}')
- for i in $(echo $A)
+ for i in $( define_origins | awk '{print $1"#separator#"$2}' )
  do
   LVM_PATH=$( echo $i | awk -F "#separator#" '{ print $2 }' )
   LVM_NAME=$( echo $i | awk -F "#separator#" '{ print $1 }' )
-
-#  echo "path=" $LVM_PATH
-#  echo "name=" $LVM_NAME
 
   $LVCREATE -s $LVM_PATH -n $LVM_NAME"_"$DATE -L1G
  done
@@ -98,14 +96,27 @@ function create_snapshots {
 
 function remove_snapshots {
  # Function for removing snapshots
- for SNAPSHOT in $(define_snapshots )
+
+ # avoid action without snapshots
+ [ -z $define_snapshots ] && echo "ERR: no snapshots detected" && exit 1
+
+ for SNAPSHOT in $( define_snapshots )
  do
    $LVREMOVE -f $SNAPSHOT
  done
 }
 
-### End Functions ##########################################################################################
+function merge_snapshots {
+ # Function for simple merging snapshots
 
+ # avoid action without snapshots
+ [ -z $define_snapshots ] && echo "ERR: no snapshots detected" && exit 1
+
+ for SNAPSHOT in $( define_snapshots )
+ do
+   $LVCONVERT --mergesnapshot -f $SNAPSHOT
+ done
+}
 
 ### Start Execution ########################################################################################
 
@@ -121,6 +132,9 @@ case "$1" in
   ;;
  -r)
   remove_snapshots
+  ;;
+ -m)
+  merge_snapshots
   ;;
  *)
   help
