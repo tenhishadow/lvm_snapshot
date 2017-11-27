@@ -1,12 +1,21 @@
 #!/bin/bash
 
-# This script manage lvm snapshot on your system
+# This script manage lvm snapshots on your system
 # author Stanislav Cherkasov
-# version 0.1
+# version 0.2
 
-# Check deps:
+# Prechecks ###########################################################
+[ -z $(which blkid) ] && echo "ERR: no blkid" && exit 1
+[ -z $(which lvs) ] && echo "ERR: no lvs" && exit 1
+[ -z $(which grep) ] && echo "ERR: no grep" && exit 1
+[ -z $(which sed) ] && echo "ERR: no sed" && exit 1
+[ -z $(which awk) ] && echo "ERR: no awk" && exit 1
+[ -z $(which lvremove) ] && echo "ERR: no lvremove" && exit 1
+[ -z $(which lvcreate) ] && echo "ERR: no lvcreate" && exit 1
+[ -z $(which date) ] && echo "ERR: no date" && exit 1
+(! [ $(whoami) == "root" ]) && echo "ERR: needs to be run from root" && exit 1
 
-# Utils
+# Utils ###############################################################
 LVS=$( which lvs )
 GRP=$( which grep )
 BLKID=$( which blkid )
@@ -16,11 +25,11 @@ LVREMOVE=$(which lvremove)
 LVCREATE=$(which lvcreate)
 DATE=$(`which date` +%Y%m%d%H%M)
 
-# Variables
+# Variables ############################################################
 VG="rootvg"
 LVSOPT="--noheadings -o lv_name,lv_attr,lv_path"
 
-### Functions #######################################################################################
+### Functions ##########################################################
 
 function help {
  # Function for help
@@ -54,7 +63,6 @@ function define_origins {
 
 function define_snapshots {
  # Function for defining snapshots
- # Changed 20170926
 
  # Defining swap lv to exclude it           ^s=only snapshots
  for i in $( $LVS $LVSOPT $VG | $AWK '$2 ~ /^s/ { print $3 }' )
@@ -74,7 +82,7 @@ function define_snapshots {
 function create_snapshots {
  # Function for creating snapshots
  # for lv like lvdata it will be lvdata_snap_$DATE
- # Changed 20170927
+
  A=$( define_origins | awk '{print $1"#separator#"$2}')
  for i in $(echo $A)
  do
