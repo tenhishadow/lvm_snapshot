@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # This script manage lvm snapshot on your system
-# author Stanislav Cherkaspv
+# author Stanislav Cherkasov
 # version 0.1
+
+# Check deps:
 
 # Utils
 LVS=$( which lvs )
@@ -19,17 +21,22 @@ VG="rootvg"
 LVSOPT="--noheadings -o lv_name,lv_attr,lv_path"
 
 ### Functions #######################################################################################
+
 function help {
+ # Function for help
 echo \
 "
 Hi, seems like you need to take a look at help
-please use -o or -s to define Origins or Snapshots
+Available options are:
+-o	Define origins
+-s	Define snapshots
+-c	Create snapshots
+-r	Remove snapshots
 "
 }
 
 function define_origins {
  # Function for defining original lvs
- # Changed 20170927
 
  # Defining swap lv to exclude it        !~/^s = no snapshots
  for i in $( $LVS $LVSOPT $VG | $AWK '$2 !~ /^s/ { print $3 }' )
@@ -83,7 +90,6 @@ function create_snapshots {
 
 function remove_snapshots {
  # Function for removing snapshots
- # Changed 20170927
  for SNAPSHOT in $(define_snapshots )
  do
    $LVREMOVE -f $SNAPSHOT
