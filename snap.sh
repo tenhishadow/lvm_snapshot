@@ -98,7 +98,7 @@ function remove_snapshots {
  # Function for removing snapshots
 
  # avoid action without snapshots
- [ -z $define_snapshots ] && echo "ERR: no snapshots detected" && exit 1
+ [ -z $( define_snapshots ) ] && echo "ERR: no snapshots detected" && exit 1
 
  for SNAPSHOT in $( define_snapshots )
  do
@@ -110,7 +110,7 @@ function merge_snapshots {
  # Function for simple merging snapshots
 
  # avoid action without snapshots
- [ -z $define_snapshots ] && echo "ERR: no snapshots detected" && exit 1
+ [ -z $( define_snapshots ) ] && echo "ERR: no snapshots detected" && exit 1
 
  for SNAPSHOT in $( define_snapshots )
  do
